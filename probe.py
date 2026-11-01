@@ -58,6 +58,37 @@ def find_opencode():
     sys.exit("opencode не знайдено в PATH")
 
 
+def list_actions(opencode):
+    """
+    Які імена дій узагалі існують у цій версії OpenCode.
+
+    Не вгадуйте їх: правило з неіснуючою дією мовчки нічого не робить.
+    Єдине надійне джерело — вбудовані правила самих агентів.
+    """
+    proc = subprocess.run([opencode, "debug", "agents"], cwd=ROOT,
+                          capture_output=True, text=True,
+                          encoding="utf-8", errors="replace", timeout=180)
+    if proc.returncode != 0 or not (proc.stdout or "").strip():
+        print("opencode debug agents нічого не повернув.")
+        print("Найчастіша причина: у поточній теці немає opencode.jsonc.")
+        return 1
+    import json
+    agents = json.loads(proc.stdout)
+    actions = sorted({p["action"] for a in agents
+                      for p in a.get("permissions", [])})
+    print("\nДії, що зустрічаються у вбудованих правилах агентів:\n")
+    for a in actions:
+        print(f"    {a}")
+    print(f"\n  агентів: {len(agents)},  різних дій: {len(actions)}")
+    print(f"  чи існує дія «bash»: "
+          f"{'так' if 'bash' in actions else 'НІ — саме тому правило з нею не діє'}")
+    print(f"  чи згадується «shell»: "
+          f"{'так' if 'shell' in actions else 'ні — і все одно заборона працює'}")
+    print("\n  Висновок: список корисний, але не вичерпний. Остаточну "
+          "відповідь\n  дає лише проба: python probe.py --all\n")
+    return 0
+
+
 def ask(opencode, model, prompt, timeout=180):
     t0 = time.monotonic()
     try:
@@ -134,6 +165,9 @@ def main():
     ap.add_argument("--exec", dest="test_exec", action="store_true",
                     help="перевірити ДІЄЮ, чи може агент виконувати код: "
                          "забрана оболонка цього не забороняє")
+    ap.add_argument("--actions", action="store_true",
+                    help="показати, які імена дій існують у цій версії "
+                         "OpenCode, і вийти")
     ap.add_argument("--model", default=MODEL)
     args = ap.parse_args()
 
@@ -144,6 +178,9 @@ def main():
             pass
 
     opencode = find_opencode()
+
+    if args.actions:
+        return list_actions(opencode)
 
     if args.all:
         targets = sorted((ROOT / "configs").glob("*.jsonc"))
