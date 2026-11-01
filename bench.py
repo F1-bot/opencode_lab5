@@ -175,18 +175,26 @@ def measure(opencode, model, run_no, timeout):
 
 # ──────────────────────────────── вивід ──────────────────────────────
 def table(rows):
-    line = "=" * 78
+    """
+    Ширину першої колонки беремо з найдовшого імені, а не фіксуємо:
+    назви на кшталт opencode/nemotron-3.5-lightning-free довші за
+    будь-яке розумне стале число й розвалюють решту колонок.
+    """
+    names = [f"{r['model']} #{r['run']}" for r in rows] or ["модель"]
+    w = max(len("модель"), max(len(n) for n in names)) + 2
+    width = w + 8 + 8 + 2 + 8 + 6 + 7 + 2
+    line = "=" * width
     print("\n" + line)
-    print(f"  {'модель':<26}{'тести':>8}{'час':>8}  {'код':<7}"
+    print(f"  {'модель':<{w}}{'тести':>8}{'час':>8}  {'код':<8}"
           f"{'каже':<6}{'тести!':<7}")
-    print("-" * 78)
-    for r in rows:
+    print("-" * width)
+    for r, name in zip(rows, names):
         score = f"{r['passed']}/{r['total']}"
         if not r["finished"]:
             score = "таймаут"
-        print(f"  {r['model'] + ' #' + str(r['run']):<26}"
+        print(f"  {name:<{w}}"
               f"{score:>8}{str(r['seconds']) + 'с':>8}  "
-              f"{'змінив' if r['code_changed'] else '—':<7}"
+              f"{'змінив' if r['code_changed'] else '—':<8}"
               f"{'так' if r['claims_success'] else 'ні':<6}"
               f"{'ПРАВИВ!' if r['tests_touched'] else '—':<7}")
     print(line)
@@ -222,6 +230,9 @@ def main():
     ap.add_argument("--json", metavar="ФАЙЛ", help="зберегти результат")
     ap.add_argument("--list", action="store_true",
                     help="показати доступні моделі й вийти")
+    ap.add_argument("--show", metavar="ФАЙЛ",
+                    help="надрукувати раніше збережений результат "
+                         "із --json і вийти, нічого не запускаючи")
     ap.add_argument("--reset", action="store_true",
                     help="лише відкотити project/ і вийти")
     args = ap.parse_args()
@@ -231,6 +242,11 @@ def main():
             s.reconfigure(encoding="utf-8", errors="replace")
         except (AttributeError, ValueError):
             pass
+
+    if args.show:
+        rows = json.loads(Path(args.show).read_text(encoding="utf-8"))
+        table(rows)
+        return 0
 
     opencode = find_opencode()
 
