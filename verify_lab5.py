@@ -10,6 +10,7 @@ verify_lab5.py — швидка перевірка, що робота зібра
 API-КЛЮЧІ: не потрібні.
 """
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -21,7 +22,36 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 PROJECT = ROOT / "project"
 
-GREEN, RED, DIM, OFF = "\033[32m", "\033[31m", "\033[90m", "\033[0m"
+def _enable_colour():
+    """
+    Увімкнути кольори, лише якщо термінал їх справді розуміє.
+
+    Класичний conhost на Windows за замовчуванням НЕ обробляє
+    ANSI-послідовності, і замість зеленого «ok» користувач бачить
+    «←[32mok ←[0m». Спершу пробуємо ввімкнути обробку
+    (ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004); якщо не вийшло —
+    працюємо без кольорів.
+    """
+    if os.environ.get("NO_COLOR") or not sys.stdout.isatty():
+        return False
+    if os.name != "nt":
+        return True
+    try:
+        import ctypes
+        k = ctypes.windll.kernel32
+        h = k.GetStdHandle(-11)
+        mode = ctypes.c_uint32()
+        if not k.GetConsoleMode(h, ctypes.byref(mode)):
+            return False
+        return bool(k.SetConsoleMode(h, mode.value | 0x0004))
+    except Exception:
+        return False
+
+
+if _enable_colour():
+    GREEN, RED, DIM, OFF = "\033[32m", "\033[31m", "\033[90m", "\033[0m"
+else:
+    GREEN = RED = DIM = OFF = ""
 
 
 class Check:
