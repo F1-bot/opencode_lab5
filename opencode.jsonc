@@ -1,0 +1,22 @@
+// ══════════════════════════════════════════════════════════════════
+// Базовий конфіг проєкту. Нічого не забороняє — саме з нього
+// починається крок про дозволи: спершу подивіться, що агенту можна
+// за замовчуванням, і тільки потім обмежуйте.
+//
+// Конфіги з обмеженнями лежать у configs/. Щоб застосувати, скопіюйте
+// потрібний сюди:
+//     copy configs\deny_shell.jsonc opencode.jsonc      :: Windows
+//     cp   configs/deny_shell.jsonc opencode.jsonc      #  Linux/macOS
+//
+// Перевіряти заборону обов'язково ззовні:
+//     python probe.py --all
+//
+// API-КЛЮЧІ: не потрібні. Моделі opencode/* із суфіксом -free і
+// opencode/big-pickle працюють без authentication — перевірено:
+// `opencode auth list` каже «No authenticated integrations», а
+// `opencode run` при цьому відповідає.
+// ══════════════════════════════════════════════════════════════════
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "opencode/big-pickle"
+}

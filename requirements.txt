@@ -1,0 +1,11 @@
+# Залежності Лабораторної 5.
+#
+# Сам агент — це OpenCode, він ставиться окремо через npm:
+#     npm i -g opencode-ai
+# Перевірено на v2.0.16.
+#
+# API-КЛЮЧІ: не потрібні. Безкоштовні моделі opencode/* працюють без
+# authentication: `opencode auth list` каже «No authenticated
+# integrations», а `opencode run` при цьому відповідає.
+
+pytest==9.2.0
